@@ -79,12 +79,30 @@ function renderTab(tabName) {
 
   currentData[tabName].forEach((item, index) => {
     const tr = document.createElement("tr");
+
+    const statusColor =
+      item.status === "Pending" ? "#f0ad4e" :
+      item.status === "In Process" ? "#5bc0de" :
+      item.status === "Completed" ? "#5cb85c" : "#ddd";
+
+    const endDate = new Date(item.endDate);
+    const today = new Date();
+    const diffDays = (endDate - today) / (1000 * 60 * 60 * 24);
+    let alertIcon = "";
+
+    if (diffDays <= 1) {
+      alertIcon = `<span style="color:red;font-weight:bold;">&#9888;</span>`;
+      setTimeout(() => {
+        alert(`تنبيه: المنتج "${item.name}" اقترب من تاريخ الانتهاء!`);
+      }, 500);
+    }
+
     tr.innerHTML = `
       <td>${index + 1}</td>
       <td>${item.name}</td>
-      <td>${item.status}</td>
+      <td><span style="background:${statusColor};color:white;padding:4px 8px;border-radius:5px;">${item.status}</span></td>
       <td>${item.startDate || "-"}</td>
-      <td>${item.endDate || "-"}</td>
+      <td>${item.endDate || "-"} ${alertIcon}</td>
       <td>${item.date || "-"}</td>
       <td><button class="delete-btn" onclick="deleteItem('${tabName}', ${index})">Delete</button></td>
     `;
@@ -128,4 +146,4 @@ function login() {
   } else {
     error.textContent = "Invalid username or password";
   }
-}
+                    }
