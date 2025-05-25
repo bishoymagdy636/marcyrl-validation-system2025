@@ -10,9 +10,7 @@ let currentData = {
 
 function fetchData(callback) {
   fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
-    headers: {
-      'X-Master-Key': apiKey
-    }
+    headers: { 'X-Master-Key': apiKey }
   })
     .then(res => res.json())
     .then(data => {
@@ -46,28 +44,34 @@ function showTab(tabName) {
 function renderTab(tabName) {
   const tab = document.getElementById(tabName);
   tab.innerHTML = `
-    <h2>${capitalize(tabName)} Tab</h2>
-    <form onsubmit="addItem('${tabName}'); return false;" style="margin-bottom: 20px;">
+    <h2>${capitalize(tabName)} Validation</h2>
+    <form onsubmit="addItem('${tabName}'); return false;" class="form">
       <input type="text" id="${tabName}-name" placeholder="Product Name" required>
       <select id="${tabName}-status">
         <option value="Pending">Pending</option>
         <option value="In Process">In Process</option>
         <option value="Completed">Completed</option>
       </select>
+      <input type="date" id="${tabName}-start" required>
+      <input type="date" id="${tabName}-end" required>
       <button type="submit">Add</button>
     </form>
-    <table class="styled-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Product Name</th>
-          <th>Status</th>
-          <th>Date Added</th>
-          <th>Delete</th>
-        </tr>
-      </thead>
-      <tbody id="${tabName}-list"></tbody>
-    </table>
+    <div class="table-container">
+      <table class="modern-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product Name</th>
+            <th>Status</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Date Added</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody id="${tabName}-list"></tbody>
+      </table>
+    </div>
   `;
 
   const list = document.getElementById(`${tabName}-list`);
@@ -79,8 +83,10 @@ function renderTab(tabName) {
       <td>${index + 1}</td>
       <td>${item.name}</td>
       <td>${item.status}</td>
-      <td>${item.date || "—"}</td>
-      <td><button onclick="deleteItem('${tabName}', ${index})">Delete</button></td>
+      <td>${item.startDate || "-"}</td>
+      <td>${item.endDate || "-"}</td>
+      <td>${item.date || "-"}</td>
+      <td><button class="delete-btn" onclick="deleteItem('${tabName}', ${index})">Delete</button></td>
     `;
     list.appendChild(tr);
   });
@@ -89,11 +95,13 @@ function renderTab(tabName) {
 function addItem(tabName) {
   const name = document.getElementById(`${tabName}-name`).value;
   const status = document.getElementById(`${tabName}-status`).value;
+  const startDate = document.getElementById(`${tabName}-start`).value;
+  const endDate = document.getElementById(`${tabName}-end`).value;
   const date = new Date().toLocaleString();
 
   if (name.trim() === "") return;
 
-  currentData[tabName].push({ name, status, date });
+  currentData[tabName].push({ name, status, startDate, endDate, date });
   saveData();
   renderTab(tabName);
 }
