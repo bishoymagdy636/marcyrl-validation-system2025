@@ -1,12 +1,106 @@
-<!-- أضف هذا الكود داخل ملف script.js بدلًا من الكود الموجود حاليًا -->const binId = "6832d59f8561e97a501b3c6b"; const apiKey = "$2a$10$Qwz/rVHOM8oW1ObRlYgz/uIcqiEvj1e/bLngpd2/P3i2gf0flGbFq";
+const binId = "6832d59f8561e97a501b3c6b";
+const apiKey = "$2a$10$Qwz/rVHOM8oW1ObRlYgz/uIcqiEvj1e/bLngpd2/P3i2gf0flGbFq";
 
-function fetchData(callback) { fetch(https://api.jsonbin.io/v3/b/${binId}/latest, { headers: { 'X-Master-Key': apiKey } }) .then(res => res.json()) .then(data => callback(data.record)) .catch(err => console.error("Fetch error:", err)); }
+let currentData = {
+  process: [],
+  report: [],
+  cleaning: [],
+  risk: []
+};
 
-function saveData(data) { fetch(https://api.jsonbin.io/v3/b/${binId}, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-Master-Key': apiKey }, body: JSON.stringify(data) }) .then(res => res.json()) .then(() => console.log("Data saved")) .catch(err => console.error("Save error:", err)); }
+function fetchData(callback) {
+  fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+    headers: {
+      'X-Master-Key': apiKey
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      currentData = data.record;
+      callback();
+    })
+    .catch(err => console.error("Fetch error:", err));
+}
 
-// مثال للاستخدام داخل التبويبات: let currentData = { process: [], report: [], cleaning: [], risk: [] };
+function saveData() {
+  fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': apiKey
+    },
+    body: JSON.stringify(currentData)
+  })
+    .then(res => res.json())
+    .then(() => console.log("Data saved"))
+    .catch(err => console.error("Save error:", err));
+}
 
-fetchData(data => { currentData = data; // بعدها تظهر البيانات في التبويبات });
+function showTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
+  const tab = document.getElementById(tabName);
+  tab.style.display = 'block';
+  renderTab(tabName);
+}
 
-function addItem(tab, item) { currentData[tab].push(item); saveData(currentData); }
+function renderTab(tabName) {
+  const tab = document.getElementById(tabName);
+  tab.innerHTML = `
+    <h2>${capitalize(tabName)} Tab</h2>
+    <form onsubmit="addItem('${tabName}'); return false;">
+      <input type="text" id="${tabName}-name" placeholder="Product Name" required>
+      <select id="${tabName}-status">
+        <option value="Pending">Pending</option>
+        <option value="In Process">In Process</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <button type="submit">Add</button>
+    </form>
+    <ul id="${tabName}-list"></ul>
+  `;
 
+  const list = document.getElementById(`${tabName}-list`);
+  currentData[tabName].forEach((item, index) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      ${item.name} - <strong>${item.status}</strong>
+      <button onclick="deleteItem('${tabName}', ${index})">Delete</button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function addItem(tabName) {
+  const name = document.getElementById(`${tabName}-name`).value;
+  const status = document.getElementById(`${tabName}-status`).value;
+  if (name.trim() === "") return;
+
+  currentData[tabName].push({ name, status });
+  saveData();
+  renderTab(tabName);
+}
+
+function deleteItem(tabName, index) {
+  currentData[tabName].splice(index, 1);
+  saveData();
+  renderTab(tabName);
+}
+
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// Login Logic
+function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+  const error = document.getElementById("login-error");
+
+  if (username === "Qa" && password === "qa12345") {
+    document.getElementById("login-page").style.display = "none";
+    document.getElementById("main-content").style.display = "block";
+    fetchData(() => showTab('process'));
+  } else {
+    error.textContent = "Invalid username or password";
+  }
+}
