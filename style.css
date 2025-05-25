@@ -1,34 +1,32 @@
-body {
-    font-family: Arial, sans-serif;
-    padding: 20px;
-}
-h2 {
-    font-size: 24px;
-}
-input {
-    display: block;
-    margin: 10px 0;
-    padding: 8px;
-    width: 200px;
-}
-button {
-    padding: 8px 16px;
-}
-.error {
-    color: red;
-}
-.tabs {
-    list-style-type: none;
-    padding: 0;
-    display: flex;
-    gap: 10px;
-}
-.tabs li {
-    cursor: pointer;
-    padding: 5px 10px;
-    background: #eee;
-    border-radius: 4px;
-}
-.tab-content {
-    margin-top: 20px;
+
+function showTab(tabId) { document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none"); document.getElementById(tabId).style.display = "block"; }
+
+function fetchData() { fetch(BASE_URL + "/latest", { headers: { "X-Master-Key": API_KEY } }) .then(res => res.json()) .then(data => { const storedData = data.record || {}; ["process", "report", "cleaning", "risk"].forEach(tab => { const section = document.getElementById(tab); section.innerHTML = generateForm(tab, storedData[tab] || []); }); }); }
+
+function generateForm(tab, entries) { let html = <h2>${tab.charAt(0).toUpperCase() + tab.slice(1)}</h2> <input type="text" id="${tab}-name" placeholder="Product Name"> <select id="${tab}-status"> <option value="Pending">Pending</option> <option value="In Process">In Process</option> <option value="Completed">Completed</option> </select> <button onclick="addEntry('${tab}')">Add</button> <ul id="${tab}-list">; entries.forEach((item, i) => { html += <li>${item.name} - ${item.status}</li>; }); html += "</ul>"; return html; }
+
+function addEntry(tab) { const name = document.getElementById(${tab}-name).value; const status = document.getElementById(${tab}-status).value; if (!name) return;
+
+fetch(BASE_URL + "/latest", {
+    headers: {
+        "X-Master-Key": API_KEY
+    }
+})
+.then(res => res.json())
+.then(data => {
+    const current = data.record || {};
+    if (!current[tab]) current[tab] = [];
+    current[tab].push({ name, status });
+
+    return fetch(BASE_URL, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify(current)
+    });
+})
+.then(() => fetchData());
+
 }
