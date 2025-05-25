@@ -47,7 +47,7 @@ function renderTab(tabName) {
   const tab = document.getElementById(tabName);
   tab.innerHTML = `
     <h2>${capitalize(tabName)} Tab</h2>
-    <form onsubmit="addItem('${tabName}'); return false;">
+    <form onsubmit="addItem('${tabName}'); return false;" style="margin-bottom: 20px;">
       <input type="text" id="${tabName}-name" placeholder="Product Name" required>
       <select id="${tabName}-status">
         <option value="Pending">Pending</option>
@@ -56,26 +56,44 @@ function renderTab(tabName) {
       </select>
       <button type="submit">Add</button>
     </form>
-    <ul id="${tabName}-list"></ul>
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>Status</th>
+          <th>Date Added</th>
+          <th>Delete</th>
+        </tr>
+      </thead>
+      <tbody id="${tabName}-list"></tbody>
+    </table>
   `;
 
   const list = document.getElementById(`${tabName}-list`);
+  list.innerHTML = "";
+
   currentData[tabName].forEach((item, index) => {
-    const li = document.createElement('li');
-    li.innerHTML = `
-      ${item.name} - <strong>${item.status}</strong>
-      <button onclick="deleteItem('${tabName}', ${index})">Delete</button>
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${item.name}</td>
+      <td>${item.status}</td>
+      <td>${item.date || "—"}</td>
+      <td><button onclick="deleteItem('${tabName}', ${index})">Delete</button></td>
     `;
-    list.appendChild(li);
+    list.appendChild(tr);
   });
 }
 
 function addItem(tabName) {
   const name = document.getElementById(`${tabName}-name`).value;
   const status = document.getElementById(`${tabName}-status`).value;
+  const date = new Date().toLocaleString();
+
   if (name.trim() === "") return;
 
-  currentData[tabName].push({ name, status });
+  currentData[tabName].push({ name, status, date });
   saveData();
   renderTab(tabName);
 }
@@ -90,7 +108,6 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// Login Logic
 function login() {
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
