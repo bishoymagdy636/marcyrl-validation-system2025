@@ -68,6 +68,7 @@
   </div>
 
   <div id="main-content" class="container" style="display:none;">
+   <div id="warning-message" class="alert alert-danger text-center" style="display: none;"></div> 
     <h2 class="text-center">Marcyrl Validation System</h2>
     <ul class="nav nav-tabs" id="tabNav">
       <li class="nav-item">
@@ -119,30 +120,32 @@
     }
 
     function generateForm(type) {
-      return `
-        <div class="mt-4">
-          <div class="mb-3">
-            <input type="text" id="${type}-name" class="form-control" placeholder="Product Name" />
-          </div>
-          <div class="mb-3">
-            <select id="${type}-status" class="form-select">
-              <option value="Pending">Pending</option>
-              <option value="In Process">In Process</option>
-              <option value="Complete">Complete</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label>Start Date:</label>
-            <input type="date" id="${type}-start" class="form-control" />
-          </div>
-          <div class="mb-3">
-            <label>Finish Date:</label>
-            <input type="date" id="${type}-end" class="form-control" />
-          </div>
-          <button class="btn btn-success mb-3" onclick="saveData('${type}')">Save</button>
-          <div id="${type}-list">${renderSavedData(type)}</div>
-        </div>
-      `;
+  return `
+    <div class="mt-4">
+      <div class="mb-3">
+        <input type="text" id="${type}-name" class="form-control" placeholder="Product Name" />
+      </div>
+      <div class="mb-3">
+        <select id="${type}-status" class="form-select">
+          <option value="Pending">Pending</option>
+          <option value="In Process">In Process</option>
+          <option value="Complete">Complete</option>
+        </select>
+      </div>
+      <div class="mb-3">
+        <label>Start Date:</label>
+        <input type="date" id="${type}-start" class="form-control" />
+      </div>
+      <div class="mb-3">
+        <label>Finish Date:</label>
+        <input type="date" id="${type}-end" class="form-control" />
+      </div>
+      <button class="btn btn-success mb-3" onclick="saveData('${type}')">Save</button>
+      
+      <div id="${type}-warning" class="alert alert-danger text-center" style="display: none;"></div>
+      <div id="${type}-list">${renderSavedData(type)}</div>
+    </div>
+  `;
     }
 
     function saveData(type) {
@@ -159,16 +162,39 @@
     }
 
     function renderSavedData(type) {
-      const stored = JSON.parse(localStorage.getItem(type) || "[]");
-      return stored.map((item, index) => `
-        <div class="data-item">
-          <strong>${item.name}</strong> - ${item.status}<br>
-          Start: ${item.start} | Finish: ${item.end}
-          <button class="btn btn-sm btn-danger float-end" onclick="deleteItem('${type}', ${index})">Delete</button>
-        </div>
-      `).join("");
+  const stored = JSON.parse(localStorage.getItem(type) || "[]");
+  const today = new Date();
+  let warningTriggered = false;
+
+  const html = stored.map((item, index) => {
+    const finishDate = new Date(item.end);
+    const timeDiff = finishDate - today;
+    const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    let warningText = '';
+    if (daysLeft <= 3 && daysLeft >= 0) {
+      warningText = `<span class="text-danger fw-bold"> - Warning: ${daysLeft} day(s) left!</span>`;
+      warningTriggered = true;
     }
 
+    return `
+      <div class="data-item">
+        <strong>${item.name}</strong> - ${item.status}${warningText}<br>
+        Start: ${item.start} | Finish: ${item.end}
+        <button class="btn btn-sm btn-danger float-end" onclick="deleteItem('${type}', ${index})">Delete</button>
+      </div>
+    `;
+  }).join("");
+
+  // عرض أو إخفاء رسالة التنبيه الخاصة بالتبويب
+  const warningBox = document.getElementById(`${type}-warning`);
+  if (warningBox) {
+    warningBox.style.display = warningTriggered ? "block" : "none";
+    warningBox.innerText = warningTriggered ? `تنبيه: يوجد مستحضر في ${type} اقترب موعد انتهاءه خلال 3 أيام أو أقل!` : "";
+  }
+
+  return html;
+    }
     function deleteItem(type, index) {
       const stored = JSON.parse(localStorage.getItem(type) || "[]");
       stored.splice(index, 1);
