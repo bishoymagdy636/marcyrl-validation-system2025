@@ -14,10 +14,20 @@ function fetchData(callback) {
   })
     .then(res => res.json())
     .then(data => {
-      currentData = data.record;
+      if (data && data.record) {
+        currentData = {
+          process: data.record.process || [],
+          report: data.record.report || [],
+          cleaning: data.record.cleaning || [],
+          risk: data.record.risk || []
+        };
+      }
       callback();
     })
-    .catch(err => console.error("Fetch error:", err));
+    .catch(err => {
+      console.error("Fetch error:", err);
+      callback(); // still call callback to avoid freeze
+    });
 }
 
 function saveData() {
@@ -122,6 +132,11 @@ function addItem(tabName) {
   currentData[tabName].push({ name, status, startDate, endDate, date });
   saveData();
   renderTab(tabName);
+
+  // Clear form fields
+  document.getElementById(`${tabName}-name`).value = "";
+  document.getElementById(`${tabName}-start`).value = "";
+  document.getElementById(`${tabName}-end`).value = "";
 }
 
 function deleteItem(tabName, index) {
@@ -146,4 +161,4 @@ function login() {
   } else {
     error.textContent = "Invalid username or password";
   }
-                    }
+}
